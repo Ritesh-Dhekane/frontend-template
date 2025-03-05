@@ -1,60 +1,44 @@
+'use client'
+
 import Link from 'next/link'
+import { Facebook, Instagram, Twitter } from 'lucide-react'
 
 export default function Footer() {
   return (
-    <footer className="w-full border-t bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">About Us</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Building the future with Next.js and modern web technologies.
-            </p>
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/about" className="text-sm hover:text-primary-100">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-sm hover:text-primary-100">
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Legal</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/privacy" className="text-sm hover:text-primary-100">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-sm hover:text-primary-100">
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">Connect</h3>
+    <footer className="bg-ravion-dark text-white py-6">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+          {/* Logo & Social */}
+          <div className="flex items-center space-x-6">
+            <Link href="/" className="font-righteous text-xl">
+              Ravion Studios
+            </Link>
             <div className="flex space-x-4">
-              <a href="https://twitter.com" className="hover:text-primary-100">
-                Twitter
+              <a href="#" className="hover:text-ravion-primary transition-colors">
+                <Facebook size={18} />
               </a>
-              <a href="https://github.com" className="hover:text-primary-100">
-                GitHub
+              <a href="#" className="hover:text-ravion-primary transition-colors">
+                <Instagram size={18} />
+              </a>
+              <a href="#" className="hover:text-ravion-primary transition-colors">
+                <Twitter size={18} />
               </a>
             </div>
           </div>
-        </div>
-        <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600 dark:text-gray-400">
-          © {new Date().getFullYear()} Frontend Template. All rights reserved.
+
+          {/* Quick Links */}
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
+            <Link href="/privacy" className="hover:text-white">Privacy</Link>
+            <Link href="/terms" className="hover:text-white">Terms</Link>
+            <Link href="/shipping" className="hover:text-white">Shipping</Link>
+            <Link href="/returns" className="hover:text-white">Returns</Link>
+            <Link href="/contact" className="hover:text-white">Contact</Link>
+          </div>
+
+          {/* Copyright */}
+          <div className="text-sm text-gray-400">
+            © {new Date().getFullYear()} Ravion Studios
+          </div>
         </div>
       </div>
     </footer>
