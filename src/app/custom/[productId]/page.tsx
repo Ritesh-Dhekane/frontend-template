@@ -1,333 +1,175 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
-import { 
-  Type, 
-  Image as ImageIcon, 
-  Plus, 
-  Minus, 
-  RotateCw, 
-  Trash2,
-  Save,
-  Undo,
-  Redo
-} from 'lucide-react'
-import { Product } from '@/types/product'
-import { CustomizationElement } from '@/types/customization'
+import { motion } from 'framer-motion'
+import { useCart } from '@/hooks/useCart'
+import { formatPrice } from '@/utils/formatPrice'
+import { getProductById } from '@/data/products'
+import { notFound } from 'next/navigation'
+import { Minus, Plus, ShoppingCart } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 
-export default function CustomizationPage({ params }: { params: { productId: string } }) {
-  const [selectedColor, setSelectedColor] = useState<string>('white')
-  const [elements, setElements] = useState<CustomizationElement[]>([])
-  const [selectedElement, setSelectedElement] = useState<string | null>(null)
-  const [history, setHistory] = useState<CustomizationElement[][]>([[]])
-  const [historyIndex, setHistoryIndex] = useState(0)
-  
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const product = products.find(p => p.id === params.productId)
+export default function CustomProductPage({ params }: { params: { productId: string } }) {
+  const [quantity, setQuantity] = useState(1)
+  const [selectedColor, setSelectedColor] = useState<string>('')
+  const [selectedSize, setSelectedSize] = useState<string>('')
+  const { addItem } = useCart()
+
+  const product = getProductById(params.productId)
 
   if (!product) {
-    return <div>Product not found</div>
+    notFound()
   }
 
-  const addText = () => {
-    const newElement: CustomizationElement = {
-      id: `text-${Date.now()}`,
-      type: 'text',
-      content: 'Double click to edit',
-      position: { x: 50, y: 50 },
-      scale: 1,
-      rotation: 0,
-      color: '#000000',
-      font: 'Arial',
-      fontSize: 24
+  const handleAddToCart = () => {
+    if (product.colors && !selectedColor) {
+      toast.error('Please select a color')
+      return
     }
-    addElement(newElement)
-  }
 
-  const addImage = (file: File) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const newElement: CustomizationElement = {
-        id: `image-${Date.now()}`,
-        type: 'image',
-        content: e.target?.result as string,
-        position: { x: 50, y: 50 },
-        scale: 1,
-        rotation: 0
-      }
-      addElement(newElement)
+    if (product.sizes && !selectedSize) {
+      toast.error('Please select a size')
+      return
     }
-    reader.readAsDataURL(file)
-  }
 
-  const addElement = (element: CustomizationElement) => {
-    const newElements = [...elements, element]
-    setElements(newElements)
-    addToHistory(newElements)
-  }
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0],
+      quantity,
+    })
 
-  const updateElement = (id: string, updates: Partial<CustomizationElement>) => {
-    const newElements = elements.map(el => 
-      el.id === id ? { ...el, ...updates } : el
-    )
-    setElements(newElements)
-    addToHistory(newElements)
-  }
-
-  const removeElement = (id: string) => {
-    const newElements = elements.filter(el => el.id !== id)
-    setElements(newElements)
-    addToHistory(newElements)
-  }
-
-  const addToHistory = (newElements: CustomizationElement[]) => {
-    const newHistory = [...history.slice(0, historyIndex + 1), newElements]
-    setHistory(newHistory)
-    setHistoryIndex(newHistory.length - 1)
-  }
-
-  const undo = () => {
-    if (historyIndex > 0) {
-      setHistoryIndex(historyIndex - 1)
-      setElements(history[historyIndex - 1])
-    }
-  }
-
-  const redo = () => {
-    if (historyIndex < history.length - 1) {
-      setHistoryIndex(historyIndex + 1)
-      setElements(history[historyIndex + 1])
-    }
+    toast.success('Added to cart!', {
+      position: 'bottom-right',
+      duration: 2000,
+    })
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Tools Panel */}
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Tools</h2>
-            <div className="flex flex-wrap gap-4">
-              <button
-                onClick={addText}
-                className="flex items-center space-x-2 px-4 py-2 bg-ravion-primary text-white rounded-lg hover:bg-ravion-primary/90"
+    <div className="container mx-auto px-4 py-12">
+      <div className="grid md:grid-cols-2 gap-12">
+        {/* Product Images */}
+        <div className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100"
+          >
+            <Image
+              src={product.images[0]}
+              alt={product.name}
+              fill
+              className="object-cover"
+            />
+          </motion.div>
+          <div className="grid grid-cols-4 gap-4">
+            {product.images.slice(1).map((image, index) => (
+              <div
+                key={index}
+                className="relative aspect-square rounded-lg overflow-hidden bg-gray-100"
               >
-                <Type size={20} />
-                <span>Add Text</span>
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center space-x-2 px-4 py-2 bg-ravion-secondary text-white rounded-lg hover:bg-ravion-secondary/90"
-              >
-                <ImageIcon size={20} />
-                <span>Add Image</span>
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && addImage(e.target.files[0])}
-              />
-            </div>
+                <Image
+                  src={image}
+                  alt={`${product.name} view ${index + 2}`}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Product Info */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="space-y-6"
+        >
+          <div>
+            <h1 className="text-4xl font-display font-bold mb-2">{product.name}</h1>
+            <p className="text-2xl text-ravion-primary font-semibold">
+              {formatPrice(product.price)}
+            </p>
+          </div>
+
+          <div className="prose dark:prose-invert">
+            <p>{product.description}</p>
           </div>
 
           {/* Color Selection */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Product Color</h2>
-            <div className="flex flex-wrap gap-2">
-              {product.colors.map(color => (
-                <button
-                  key={color}
-                  onClick={() => setSelectedColor(color)}
-                  className={`w-10 h-10 rounded-full border-2 ${
-                    selectedColor === color
-                      ? 'border-ravion-primary'
-                      : 'border-transparent'
-                  }`}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Element Properties */}
-          {selectedElement && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-              <h2 className="text-xl font-semibold mb-4">Properties</h2>
-              <div className="space-y-4">
-                {/* Element-specific controls */}
-                {elements.find(el => el.id === selectedElement)?.type === 'text' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Text Color
-                      </label>
-                      <input
-                        type="color"
-                        value={elements.find(el => el.id === selectedElement)?.color || '#000000'}
-                        onChange={(e) => updateElement(selectedElement, { color: e.target.value })}
-                        className="w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Font Size
-                      </label>
-                      <input
-                        type="range"
-                        min="12"
-                        max="72"
-                        value={elements.find(el => el.id === selectedElement)?.fontSize || 24}
-                        onChange={(e) => updateElement(selectedElement, { fontSize: parseInt(e.target.value) })}
-                        className="w-full"
-                      />
-                    </div>
-                  </>
-                )}
-                
-                {/* Common controls */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Scale
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => {
-                        const element = elements.find(el => el.id === selectedElement)
-                        if (element) {
-                          updateElement(selectedElement, { scale: element.scale - 0.1 })
-                        }
-                      }}
-                      className="p-2 rounded-lg border hover:border-ravion-primary"
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        const element = elements.find(el => el.id === selectedElement)
-                        if (element) {
-                          updateElement(selectedElement, { scale: element.scale + 0.1 })
-                        }
-                      }}
-                      className="p-2 rounded-lg border hover:border-ravion-primary"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Rotation
-                  </label>
+          {product.colors && product.colors.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold mb-4">Product Color</h2>
+              <div className="flex flex-wrap gap-2">
+                {product.colors.map(color => (
                   <button
-                    onClick={() => {
-                      const element = elements.find(el => el.id === selectedElement)
-                      if (element) {
-                        updateElement(selectedElement, { rotation: element.rotation + 90 })
-                      }
-                    }}
-                    className="p-2 rounded-lg border hover:border-ravion-primary"
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                      selectedColor === color
+                        ? 'border-ravion-primary bg-ravion-primary/10'
+                        : 'border-gray-200 hover:border-ravion-primary'
+                    }`}
                   >
-                    <RotateCw size={16} />
+                    {color}
                   </button>
-                </div>
-
-                <button
-                  onClick={() => removeElement(selectedElement)}
-                  className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                >
-                  <Trash2 size={16} />
-                  <span>Delete Element</span>
-                </button>
+                ))}
               </div>
             </div>
           )}
-        </div>
 
-        {/* Preview Area */}
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-            <div className="relative aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-              {/* Product Base Image */}
-              <div className="absolute inset-0" style={{ backgroundColor: selectedColor }} />
-              
-              {/* Customization Elements */}
-              {elements.map(element => (
-                <div
-                  key={element.id}
-                  className={`absolute cursor-move ${
-                    selectedElement === element.id ? 'ring-2 ring-ravion-primary' : ''
-                  }`}
-                  style={{
-                    left: `${element.position.x}%`,
-                    top: `${element.position.y}%`,
-                    transform: `
-                      translate(-50%, -50%)
-                      scale(${element.scale})
-                      rotate(${element.rotation}deg)
-                    `
-                  }}
-                  onClick={() => setSelectedElement(element.id)}
-                >
-                  {element.type === 'text' ? (
-                    <div
-                      contentEditable
-                      suppressContentEditableWarning
-                      style={{
-                        color: element.color,
-                        fontFamily: element.font,
-                        fontSize: element.fontSize
-                      }}
-                      onBlur={(e) => updateElement(element.id, { content: e.target.textContent || '' })}
-                    >
-                      {element.content}
-                    </div>
-                  ) : (
-                    <img
-                      src={element.content}
-                      alt="Custom element"
-                      className="max-w-[200px] max-h-[200px]"
-                    />
-                  )}
-                </div>
-              ))}
+          {/* Size Selection */}
+          {product.sizes && product.sizes.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold mb-4">Size</h2>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map(size => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                      selectedSize === size
+                        ? 'border-ravion-primary bg-ravion-primary/10'
+                        : 'border-gray-200 hover:border-ravion-primary'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Action Buttons */}
-          <div className="flex justify-between mt-6">
-            <div className="flex space-x-2">
+          {/* Quantity and Add to Cart */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
               <button
-                onClick={undo}
-                disabled={historyIndex === 0}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
-                <Undo size={20} />
+                <Minus className="h-5 w-5" />
               </button>
+              <span className="text-xl font-medium">{quantity}</span>
               <button
-                onClick={redo}
-                disabled={historyIndex === history.length - 1}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+                onClick={() => setQuantity(quantity + 1)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
-                <Redo size={20} />
+                <Plus className="h-5 w-5" />
               </button>
             </div>
+
             <button
-              className="flex items-center space-x-2 px-6 py-2 bg-ravion-primary text-white rounded-lg hover:bg-ravion-primary/90"
+              onClick={handleAddToCart}
+              className="w-full flex items-center justify-center space-x-2 bg-ravion-primary text-white px-6 py-3 rounded-lg hover:bg-ravion-primary/90 transition-colors"
             >
-              <Save size={20} />
-              <span>Save Design</span>
+              <ShoppingCart className="h-5 w-5" />
+              <span>Add to Cart</span>
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   )
 }
-
-const products: Product[] = [
-  // Same sample products as before
-] 

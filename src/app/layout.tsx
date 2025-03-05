@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import "./globals.css";
 import ScrollToTop from '@/components/ScrollToTop'
+import { Toaster } from 'react-hot-toast'
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const jakarta = Plus_Jakarta_Sans({ 
@@ -18,8 +19,11 @@ const righteous = Righteous({
 });
 
 export const metadata: Metadata = {
-  title: "Frontend Template",
-  description: "Next.js Frontend Template",
+  title: "Ravion Studios",
+  description: "Custom apparel and merchandise for your brand",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -38,6 +42,7 @@ export default function RootLayout({
             </main>
             <Footer />
             <ScrollToTop />
+            <Toaster />
           </div>
         </ThemeProvider>
       </body>

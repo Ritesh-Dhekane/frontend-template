@@ -6,14 +6,15 @@ export interface Product {
   name: string
   description: string
   price: number
-  category: ProductCategory
-  subCategory: ProductSubCategory
   images: string[]
-  customizable: boolean
-  minOrder: number
-  colors: string[]
+  category: string
+  subCategory?: string
+  details?: string[]
+  customizable?: boolean
+  minOrder?: number
+  colors?: string[]
   sizes?: string[]
-  inStock: boolean
-  rating: number
-  reviews: number
+  inStock?: boolean
+  rating?: number
+  reviews?: number
 } 

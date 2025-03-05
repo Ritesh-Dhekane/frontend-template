@@ -3,145 +3,131 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Trash2, Minus, Plus, ArrowRight } from 'lucide-react'
-import { useCartStore } from '@/store/cartStore'
+import { motion } from 'framer-motion'
+import { useCart } from '@/hooks/useCart'
+import { formatPrice } from '@/utils/formatPrice'
+import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react'
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, getTotal } = useCartStore()
-  const [isUpdating, setIsUpdating] = useState(false)
-
-  const handleQuantityChange = async (itemId: string, newQuantity: number) => {
-    setIsUpdating(true)
-    // In a real app, you might want to check stock availability here
-    updateQuantity(itemId, Math.max(1, newQuantity))
-    setIsUpdating(false)
-  }
+  const { items, total, updateQuantity, removeItem } = useCart()
+  const [loading, setLoading] = useState(false)
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8">
-            Looks like you haven't added anything to your cart yet.
-          </p>
-          <Link
-            href="/products"
-            className="inline-flex items-center space-x-2 bg-ravion-primary text-white px-6 py-3 rounded-lg hover:bg-ravion-primary/90"
-          >
-            <span>Start Shopping</span>
-            <ArrowRight size={20} />
-          </Link>
-        </div>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center">
+        <ShoppingBag className="w-16 h-16 text-gray-400 mb-4" />
+        <h1 className="text-2xl font-display font-bold mb-2">Your cart is empty</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
+          Looks like you haven't added anything to your cart yet
+        </p>
+        <Link
+          href="/products"
+          className="bg-ravion-primary text-white px-6 py-3 rounded-lg hover:bg-ravion-primary/90 transition-colors"
+        >
+          Start Shopping
+        </Link>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+    <div className="container mx-auto px-4 py-12">
+      <h1 className="text-3xl font-display font-bold mb-8">Shopping Cart</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-8">
         {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-6">
           {items.map((item) => (
-            <div
+            <motion.div
               key={item.id}
-              className="flex gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm"
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="flex gap-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-soft"
             >
               <div className="relative w-24 h-24">
-                {item.customization ? (
-                  <Image
-                    src={item.customization.design}
-                    alt={item.product.name}
-                    fill
-                    className="object-cover rounded-md"
-                  />
-                ) : (
-                  <Image
-                    src={item.product.images[0]}
-                    alt={item.product.name}
-                    fill
-                    className="object-cover rounded-md"
-                  />
-                )}
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  fill
+                  className="object-cover rounded-md"
+                />
               </div>
 
-              <div className="flex-1">
-                <div className="flex justify-between">
-                  <div>
-                    <h3 className="font-semibold">{item.product.name}</h3>
-                    {item.customization && (
-                      <span className="text-sm text-ravion-primary">Customized</span>
-                    )}
-                    <div className="text-sm text-gray-600 dark:text-gray-400 space-x-2">
-                      {item.color && <span>Color: {item.color}</span>}
-                      {item.size && <span>Size: {item.size}</span>}
-                    </div>
-                  </div>
+              <div className="flex-grow">
+                <div className="flex justify-between mb-2">
+                  <Link 
+                    href={`/products/${item.id}`}
+                    className="text-lg font-medium hover:text-ravion-primary transition-colors"
+                  >
+                    {item.name}
+                  </Link>
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="text-gray-400 hover:text-red-500"
+                    className="text-gray-400 hover:text-red-500 transition-colors"
                   >
-                    <Trash2 size={20} />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="flex justify-between items-center mt-4">
-                  <div className="flex items-center space-x-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
                     <button
-                      onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                      disabled={isUpdating}
-                      className="p-1 rounded-md border hover:border-ravion-primary disabled:opacity-50"
+                      onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <Minus size={16} />
+                      <Minus className="w-4 h-4" />
                     </button>
                     <span className="w-8 text-center">{item.quantity}</span>
                     <button
-                      onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                      disabled={isUpdating}
-                      className="p-1 rounded-md border hover:border-ravion-primary disabled:opacity-50"
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <Plus size={16} />
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
-                  <span className="font-semibold">
-                    ${(item.product.price * item.quantity).toFixed(2)}
-                  </span>
+                  <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Order Summary */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm h-fit">
-          <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-          
-          <div className="space-y-2 mb-4">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>${getTotal().toFixed(2)}</span>
+        <div className="lg:col-span-1">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-soft sticky top-24">
+            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+            
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>{formatPrice(total)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Shipping</span>
+                <span>{formatPrice(0)}</span>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between font-semibold">
+                  <span>Total</span>
+                  <span>{formatPrice(total)}</span>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-between text-gray-600 dark:text-gray-400">
-              <span>Shipping</span>
-              <span>Calculated at checkout</span>
-            </div>
-          </div>
 
-          <div className="border-t pt-4 mb-6">
-            <div className="flex justify-between font-semibold">
-              <span>Total</span>
-              <span>${getTotal().toFixed(2)}</span>
-            </div>
+            <Link
+              href="/checkout"
+              className={`
+                w-full flex items-center justify-center space-x-2 
+                bg-ravion-primary text-white px-6 py-3 rounded-lg 
+                hover:bg-ravion-primary/90 transition-colors
+                ${loading ? 'opacity-50 cursor-not-allowed' : ''}
+              `}
+            >
+              <span>Proceed to Checkout</span>
+            </Link>
           </div>
-
-          <Link
-            href="/checkout"
-            className="block w-full bg-ravion-primary text-white text-center py-3 rounded-lg hover:bg-ravion-primary/90"
-          >
-            Proceed to Checkout
-          </Link>
         </div>
       </div>
     </div>

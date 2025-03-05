@@ -20,14 +20,16 @@ export default function ProductsPage() {
         product.price >= priceRange[0] && 
         product.price <= priceRange[1]
       )
-      .sort((a, b) => {
+      .sort((a: Product, b: Product) => {
         switch (sortBy) {
           case 'price-asc':
             return a.price - b.price
           case 'price-desc':
             return b.price - a.price
           case 'rating':
-            return b.rating - a.rating
+            const ratingA = a.rating ?? 0
+            const ratingB = b.rating ?? 0
+            return ratingB - ratingA
           default:
             return 0
         }

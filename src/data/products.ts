@@ -41,21 +41,26 @@ export const products: Product[] = [
   },
   {
     id: 'student-planner-1',
-    name: 'Academic Planner 2024',
-    description: 'Custom designed planner for optimal student organization',
-    price: 19.99,
-    category: 'stationery',
-    subCategory: 'planners',
+    name: 'Student Academic Planner',
+    description: 'Stay organized throughout your academic year with our comprehensive student planner. Features dedicated spaces for assignments, exams, and extracurricular activities.',
+    price: 599,
     images: [
       'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800',
-      'https://images.unsplash.com/photo-1506784365847-bbad939e9335?w=800',
+      'https://images.unsplash.com/photo-1531346680769-a1d79b57de5c?w=800',
+      'https://images.unsplash.com/photo-1506784926709-22f1ec395907?w=800',
+      'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800',
     ],
-    customizable: true,
-    minOrder: 1,
-    colors: ['classic', 'minimalist', 'vibrant'],
-    inStock: true,
-    rating: 4.7,
-    reviews: 203
+    details: [
+      'Monthly and weekly planning pages',
+      'Assignment tracker',
+      'Exam schedule',
+      'Goal setting section',
+      'Study time log',
+      'Premium 100 GSM paper',
+      'Hardcover binding',
+      'Bookmark ribbons'
+    ],
+    category: 'stationery'
   },
   {
     id: 'custom-notebook-1',
@@ -112,4 +117,16 @@ export const products: Product[] = [
     rating: 4.7,
     reviews: 156
   }
-] 
+]
+
+export const getProductById = (id: string) => {
+  return products.find(product => product.id === id)
+}
+
+export const getAllProducts = () => {
+  return products
+}
+
+export const getProductsByCategory = (category: string) => {
+  return products.filter(product => product.category === category)
+} 

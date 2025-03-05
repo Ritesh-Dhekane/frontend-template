@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { auth } from '@/config/firebase'
+// import { auth } from '@/config/firebase'
 import { User } from 'firebase/auth'
 
 interface AuthStore {
@@ -16,9 +16,9 @@ export const useAuth = create<AuthStore>((set) => ({
   setLoading: (loading) => set({ loading }),
 }))
 
-export const initializeAuth = () => {
-  auth.onAuthStateChanged((user) => {
-    useAuth.getState().setUser(user)
-    useAuth.getState().setLoading(false)
-  })
-} 
+// export const initializeAuth = () => {
+//   auth.onAuthStateChanged((user) => {
+//     useAuth.getState().setUser(user)
+//     useAuth.getState().setLoading(false)
+//   })
+// } 

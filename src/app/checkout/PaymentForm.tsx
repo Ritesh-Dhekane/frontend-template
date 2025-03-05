@@ -1,64 +1,78 @@
 'use client'
 
 import { useState } from 'react'
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js'
+import { useRouter } from 'next/navigation'
+import { useCart } from '@/hooks/useCart'
+import { toast } from 'react-hot-toast'
 
-interface PaymentFormProps {
-  total: number
-}
-
-export default function PaymentForm({ total }: PaymentFormProps) {
+export default function PaymentForm() {
   const stripe = useStripe()
   const elements = useElements()
-  const [error, setError] = useState<string | null>(null)
-  const [processing, setProcessing] = useState(false)
+  const router = useRouter()
+  const { clearCart } = useCart()
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!stripe || !elements) return
 
-    setProcessing(true)
-    
-    // Here you would typically:
-    // 1. Create a payment intent on your server
-    // 2. Confirm the payment with Stripe
-    // 3. Handle the result
-    // 4. Redirect to success/failure page
+    if (!stripe || !elements) {
+      return
+    }
 
-    setProcessing(false)
+    setIsProcessing(true)
+    setError('')
+
+    try {
+      const { error: submitError } = await elements.submit()
+      if (submitError) {
+        setError(submitError.message || 'An error occurred')
+        return
+      }
+
+      const { error: paymentError } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/order-confirmation`,
+        },
+      })
+
+      if (paymentError) {
+        setError(paymentError.message || 'Payment failed')
+        toast.error('Payment failed')
+      } else {
+        clearCart()
+        toast.success('Payment successful!')
+        router.push('/order-confirmation')
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+      toast.error('An unexpected error occurred')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-      <h2 className="text-xl font-semibold mb-6">Payment Information</h2>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PaymentElement />
       
-      <div className="mb-6">
-        <CardElement
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                  color: '#aab7c4',
-                },
-              },
-              invalid: {
-                color: '#9e2146',
-              },
-            },
-          }}
-          className="p-4 border rounded-lg"
-        />
-        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-      </div>
+      {error && (
+        <div className="text-red-500 text-sm">{error}</div>
+      )}
 
       <button
         type="submit"
-        disabled={!stripe || processing}
-        className="w-full bg-ravion-primary text-white py-3 rounded-lg hover:bg-ravion-primary/90 disabled:opacity-50"
+        disabled={!stripe || isProcessing}
+        className={`
+          w-full flex items-center justify-center space-x-2 
+          bg-ravion-primary text-white px-6 py-3 rounded-lg 
+          hover:bg-ravion-primary/90 transition-colors
+          ${(!stripe || isProcessing) ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
       >
-        {processing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
+        {isProcessing ? 'Processing...' : 'Pay Now'}
       </button>
     </form>
   )
